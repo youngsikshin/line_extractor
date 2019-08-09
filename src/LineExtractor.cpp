@@ -11,12 +11,20 @@ namespace line_extractor {
 
 LineExtractor::LineExtractor(ros::NodeHandle nh, ros::NodeHandle private_nh)
 {
-    pub_ =  nh.advertise<line_extractor::LineListMessage>("lines", 10);
-    pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>("line_pc", 10);
-    pc_sub_ = nh.subscribe<sensor_msgs::PointCloud2>("/filtered_pc",1,&LineExtractor::scan_callback, this);
-    // pc_sub_ = nh.subscribe<sensor_msgs::PointCloud2>("/pc2",1,&LineExtractor::scan_callback, this);
+    private_nh.param<std::string>("sub_pc_topic", sub_pc_topic_, "/filtered_pc");
+    private_nh.param<std::string>("pub_line_topic", pub_line_topic_, "/lines");
+    private_nh.param<std::string>("filtered_pc_topic", pub_line_filtered_pc_topic_, "line_pc");
+    private_nh.param<std::string>("line_visualize_topic", line_vis_topic_, "/visualization_marker");
 
-    marker_pub_ = nh.advertise<visualization_msgs::Marker>("visualization_marker", 10);
+    private_nh.param<double>("line_distance", line_distance_threshold_, 0.12);
+    private_nh.param<double>("angular_resolution", angular_resolution_, 6.8);
+    private_nh.param<double>("arc_length_ratio", arc_length_ratio_, 1.1);
+
+    pc_sub_ = nh.subscribe<sensor_msgs::PointCloud2>(sub_pc_topic_,1,&LineExtractor::scan_callback, this);
+    pub_ =  nh.advertise<line_extractor::LineListMessage>(pub_line_topic_, 10);
+    pc_pub_ = nh.advertise<sensor_msgs::PointCloud2>(pub_line_filtered_pc_topic_, 10);
+    
+    marker_pub_ = nh.advertise<visualization_msgs::Marker>(line_vis_topic_, 10);
     reset();
 }
 
@@ -31,13 +39,15 @@ void LineExtractor::scan_callback(const sensor_msgs::PointCloud2::ConstPtr& pc_m
     pcl::PointCloud<pcl::PointXYZ>::Ptr pc_ptr(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::fromROSMsg(*pc_msg, *pc_ptr);
 
+    if(pc_ptr->points.size() < 3)   return;
+
     pcl::PointCloud <pcl::PointXYZ> pc_cloud;
     pcl::PointCloud <pcl::PointXYZ> tmp_cloud;
 
     reset();
 
-    float angle_thresh = 6.8 * M_PI/180.0;
-    float line_dist_threshold = 0.12;
+    float angle_thresh = angular_resolution_ * M_PI/180.0;
+    float line_dist_threshold = line_distance_threshold_;
 
     size_t idx = 0;
     do {
@@ -56,7 +66,7 @@ void LineExtractor::scan_callback(const sensor_msgs::PointCloud2::ConstPtr& pc_m
             float angle1 = Point::calc_angle(point_k, point_k2);
             float angle2 = Point::calc_angle(point_k2, point_k3);
 
-            float threshold = point_k2.norm()*angle_thresh*1.1;
+            float threshold = point_k2.norm()*angle_thresh*arc_length_ratio_;
             // float threshold = 0.0;
             // if(point_k2.norm() < 1.5)
             //     threshold = point_k2.norm()*angle_thresh*1.5;
@@ -106,7 +116,7 @@ void LineExtractor::scan_callback(const sensor_msgs::PointCloud2::ConstPtr& pc_m
             float point_dist = last_line_seg.dist_from_raw_ep(point_k);
             float line_dist = last_line_seg.dist_from_line(point_k);
 
-            float point_dist_threshold = point_k.norm()*angle_thresh*1.1;
+            float point_dist_threshold = point_k.norm()*angle_thresh*arc_length_ratio_;
             // float point_dist_threshold = 0.0f;
             // if(point_k.norm() < 1.5)
             //     point_dist_threshold = point_k.norm()*angle_thresh*1.5;

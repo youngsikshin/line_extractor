@@ -1,0 +1,30 @@
+<launch>
+    <!-- run sweep_filter_node node -->
+    <node name="sweep_filter"  pkg="sweep_filter"  type="sweep_filter" output="screen">
+        <param name="frame_id" type="string" value="laser_frame"/>
+
+        <param name="input_topic" type="string" value="/pc2"/>
+        <param name="output_topic" type="string" value="/filtered_pc"/>
+
+        <param name="radius" type="double" value="0.5"/>
+        <param name="preserve_distance" type="double" value="1.8"/>
+        <param name="degree" type="double" value="135.0"/>
+    </node>
+
+    <node pkg="tf2_ros" type="static_transform_publisher" name="base_to_laser" args="0 0 0 0 0 -0.05 1 /base_footprint /laser_frame" />
+
+    <!-- run line_extractor -->
+    <node name="line_extractor"  pkg="line_extractor"  type="line_extractor_node" output="screen">
+        <param name="sub_pc_topic" type="string" value="/filtered_pc"/>
+        <param name="pub_line_topic" type="string" value="laser_frame"/>
+        <param name="filtered_pc_topic" type="string" value="/line_pc"/>
+        <param name="line_visualize_topic" type="string" value="/visualization_marker"/>
+
+        <param name="line_distance" type="double" value="0.12"/>
+        <param name="angular_resolution" type="double" value="6.8"/>
+        <param name="arc_length_ratio" type="double" value="1.1"/>
+    </node>
+
+
+</launch>
+

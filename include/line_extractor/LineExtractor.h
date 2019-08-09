@@ -1,4 +1,5 @@
 #include <iostream>
+#include <string>
 #include <vector>
 #include <cmath>
 #include <ros/ros.h>
@@ -20,6 +21,15 @@ public:
     void reset();
 
 private:
+    std::string sub_pc_topic_;
+    std::string pub_line_topic_;
+    std::string pub_line_filtered_pc_topic_;
+    std::string line_vis_topic_;
+
+    double line_distance_threshold_;
+    double angular_resolution_;
+    double arc_length_ratio_;
+
     ros::Publisher pub_;
     ros::Publisher pc_pub_;
     ros::Publisher marker_pub_;

@@ -1,0 +1,15 @@
+<launch>
+
+    <node name="line_extractor"  pkg="line_extractor"  type="line_extractor_node" output="screen">
+        <param name="sub_pc_topic" type="string" value="/filtered_pc"/>
+        <param name="pub_line_topic" type="string" value="laser_frame"/>
+        <param name="filtered_pc_topic" type="string" value="/line_pc"/>
+        <param name="line_visualize_topic" type="string" value="/visualization_marker"/>
+
+        <param name="line_distance" type="double" value="0.12"/>
+        <param name="angular_resolution" type="double" value="6.8"/>
+        <param name="arc_length_ratio" type="double" value="1.1"/>
+    </node>
+
+</launch>
+
